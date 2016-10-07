@@ -25,3 +25,7 @@ class TestUtil(unittest.TestCase):
             point_to_tile(-122.2712, 37.8043, 10),
             [164, 395, 10]
         )
+        self.assertEqual(
+            point_to_tile(-74.06, 40.72, 5),
+            [9, 12, 5]
+        )

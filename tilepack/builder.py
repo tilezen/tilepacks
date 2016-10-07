@@ -44,10 +44,12 @@ def main():
             fetches.append(dict(x=x, y=y, zoom=z, layer=args.layer, fmt=args.format, api_key=api_key))
 
     with zipfile.ZipFile(args.output, 'w', compression=zipfile.ZIP_DEFLATED) as zipf:
-        for format_args, data in p.imap(fetch_tile, fetches):
+        for format_args, data in p.imap_unordered(fetch_tile, fetches):
             key = '{layer}/{zoom}/{x}/{y}.{fmt}'.format(**format_args)
             zipf.writestr(key, data)
             print("Wrote {}".format(key))
+
+    p.close()
 
 if __name__ == '__main__':
     main()

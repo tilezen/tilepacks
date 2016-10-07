@@ -13,3 +13,11 @@ class TestBuilder(unittest.TestCase):
                 (8, 12, 5),
             ]
         )
+
+        self.assertEqual(
+            list(cover_bbox(-74.501, 40.345, -73.226, 41.097, 5)),
+            [
+                (9, 11, 5),
+                (9, 12, 5),
+            ]
+        )
