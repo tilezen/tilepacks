@@ -38,18 +38,19 @@ def main():
 
     api_key = os.environ.get('MAPZEN_API_KEY')
 
-    p = multiprocessing.Pool()
+    p = multiprocessing.Pool(25)
 
     fetches = []
     for zoom in range(args.min_zoom, args.max_zoom + 1):
         for x, y, z in cover_bbox(args.min_lon, args.min_lat, args.max_lon, args.max_lat, zoom=zoom):
             fetches.append(dict(x=x, y=y, zoom=z, layer=args.layer, fmt=args.format, api_key=api_key))
 
+    tiles_to_get = len(fetches)
+
     with zipfile.ZipFile(args.output, 'w', compression=zipfile.ZIP_DEFLATED) as zipf:
-        for format_args, data in p.imap_unordered(fetch_tile, fetches):
+        for i, (format_args, data) in enumerate(p.imap_unordered(fetch_tile, fetches)):
             key = '{layer}/{zoom}/{x}/{y}.{fmt}'.format(**format_args)
             zipf.writestr(key, data)
-            print("Wrote {}".format(key))
 
     p.close()
 
