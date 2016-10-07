@@ -9,4 +9,4 @@ def point_to_tile_fraction(lon, lat, zoom):
 
 def point_to_tile(lon, lat, zoom):
     (x, y, z) = point_to_tile_fraction(lon, lat, zoom)
-    return [math.floor(x), math.floor(y), zoom]
+    return [int(x), int(y), zoom]
