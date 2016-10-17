@@ -1,4 +1,5 @@
 from tilepack.util import point_to_tile
+import tilepack.outputter
 import requests
 import zipfile
 import argparse
@@ -23,17 +24,43 @@ def fetch_tile(format_args):
         except requests.exceptions.ConnectionError:
             print("Connection error, retrying")
 
+output_type_mapping = {
+    'mbtiles': tilepack.outputter.MbtilesOutput,
+    'zipfile': tilepack.outputter.ZipfileOutput,
+}
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('min_lon', type=float, help='Bounding box minimum longitude/left')
-    parser.add_argument('min_lat', type=float, help='Bounding box minimum latitude/bottom')
-    parser.add_argument('max_lon', type=float, help='Bounding box maximum longitude/right')
-    parser.add_argument('max_lat', type=float, help='Bounding box maximum latitude/top')
-    parser.add_argument('min_zoom', type=int, help='The minimum zoom level to include')
-    parser.add_argument('max_zoom', type=int, help='The maximum zoom level to include')
-    parser.add_argument('output', help='The filename for the output tile package')
-    parser.add_argument('--layer', default='all')
-    parser.add_argument('--format', default='mvt')
+    parser.add_argument('min_lon',
+        type=float,
+        help='Bounding box minimum longitude/left')
+    parser.add_argument('min_lat',
+        type=float,
+        help='Bounding box minimum latitude/bottom')
+    parser.add_argument('max_lon',
+        type=float,
+        help='Bounding box maximum longitude/right')
+    parser.add_argument('max_lat',
+        type=float,
+        help='Bounding box maximum latitude/top')
+    parser.add_argument('min_zoom',
+        type=int,
+        help='The minimum zoom level to include')
+    parser.add_argument('max_zoom',
+        type=int,
+        help='The maximum zoom level to include')
+    parser.add_argument('output',
+        help='The filename for the output tile package')
+    parser.add_argument('--layer',
+        default='all',
+        help='The Mapzen Vector Tile layer to request')
+    parser.add_argument('--tile-format',
+        default='mvt',
+        help='The Mapzen Vector Tile format to request')
+    parser.add_argument('--output-format',
+        default='mbtiles,zipfile',
+        type=lambda x: x.split(','),
+        help='A comma-separated list of output formats to write to')
     args = parser.parse_args()
 
     api_key = os.environ.get('MAPZEN_API_KEY')
@@ -43,16 +70,22 @@ def main():
     fetches = []
     for zoom in range(args.min_zoom, args.max_zoom + 1):
         for x, y, z in cover_bbox(args.min_lon, args.min_lat, args.max_lon, args.max_lat, zoom=zoom):
-            fetches.append(dict(x=x, y=y, zoom=z, layer=args.layer, fmt=args.format, api_key=api_key))
+            fetches.append(dict(x=x, y=y, zoom=z, layer=args.layer, fmt=args.tile_format, api_key=api_key))
 
     tiles_to_get = len(fetches)
 
-    with zipfile.ZipFile(args.output, 'w', compression=zipfile.ZIP_DEFLATED) as zipf:
-        for i, (format_args, data) in enumerate(p.imap_unordered(fetch_tile, fetches)):
-            key = '{layer}/{zoom}/{x}/{y}.{fmt}'.format(**format_args)
-            zipf.writestr(key, data)
+    tile_ouputters = [output_type_mapping.get(t).build_from_basename(args.output) for t in set(args.output_format)]
 
-    p.close()
+    try:
+        for t in tile_ouputters:
+            t.open()
+
+        for i, (format_args, data) in enumerate(p.imap_unordered(fetch_tile, fetches)):
+            for t in tile_ouputters:
+                t.add_tile(format_args, data)
+    finally:
+        for t in tile_ouputters:
+            t.close()
 
 if __name__ == '__main__':
     main()
