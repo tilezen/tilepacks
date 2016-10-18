@@ -54,6 +54,18 @@ class MbtilesOutput(object):
             PRAGMA journal_mode=DELETE
             """)
 
+    def _flip_y(self, zoom, row):
+        """
+        mbtiles requires WMTS (origin in the upper left),
+        and Tilezen stores in TMS (origin in the lower left).
+        This adjusts the row/y value to match WMTS.
+        """
+
+        if row is None or zoom is None:
+            raise TypeError("zoom and row cannot be null")
+
+        return (2 ** zoom) - 1 - row
+
     def open(self):
         self._conn = sqlite3.connect(self._filename)
         self._cur = self._conn.cursor()
@@ -71,7 +83,7 @@ class MbtilesOutput(object):
             (
                 tile_info.get('zoom'),
                 tile_info.get('x'),
-                tile_info.get('y'),
+                self._flip_y(tile_info.get('zoom'), tile_info.get('y')),
                 sqlite3.Binary(data),
             )
         )
