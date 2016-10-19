@@ -18,7 +18,7 @@ def cover_bbox(min_lon, min_lat, max_lon, max_lat, zoom):
 
 # def fetch_tile(x, y, z, layer, format, api_key):
 def fetch_tile(format_args):
-    sleep_time = 0.5
+    sleep_time = 0.5 * random.uniform(1.0, 1.7)
     while True:
         url = 'https://tile.mapzen.com/mapzen/vector/v1/{layer}/{zoom}/{x}/{y}.{fmt}?api_key={api_key}'.format(**format_args)
         try:
@@ -27,9 +27,13 @@ def fetch_tile(format_args):
             return (format_args, resp.content)
         except requests.exceptions.RequestException as e:
             if isinstance(e, requests.exceptions.HTTPError):
-                print("HTTP error {} -- {} while retrieving {}, retrying after {} sec".format(e.response.status_code, e.response.text, url, sleep_time))
+                print("HTTP error {} -- {} while retrieving {}, retrying after {:0.2f} sec".format(
+                    e.response.status_code, e.response.text, url, sleep_time)
+                )
             else:
-                print("{} while retrieving {}, retrying after {} sec".format(type(e), url, sleep_time))
+                print("{} while retrieving {}, retrying after {:0.2f} sec".format(
+                    type(e), url, sleep_time)
+                )
             time.sleep(sleep_time)
             sleep_time = min(sleep_time * 2.0, 30.0) * random.uniform(1.0, 1.7)
 
