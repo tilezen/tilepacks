@@ -5,6 +5,7 @@ import zipfile
 import argparse
 import os
 import multiprocessing
+import time
 
 def cover_bbox(min_lon, min_lat, max_lon, max_lat, zoom):
     min_x, max_y, _ = point_to_tile(min_lon, min_lat, zoom)
@@ -16,6 +17,7 @@ def cover_bbox(min_lon, min_lat, max_lon, max_lat, zoom):
 
 # def fetch_tile(x, y, z, layer, format, api_key):
 def fetch_tile(format_args):
+    sleep_time = 0.5
     while True:
         url = 'https://vector.mapzen.com/osm/{layer}/{zoom}/{x}/{y}.{fmt}?api_key={api_key}'.format(**format_args)
         try:
@@ -23,7 +25,9 @@ def fetch_tile(format_args):
             resp.raise_for_status()
             return (format_args, resp.content)
         except requests.exceptions.RequestException, e:
-            print("{} -- {} ... while retrieving {}, retrying".format(type(e), e.message, url))
+            print("{} -- {} ... while retrieving {}, retrying after {} sec".format(type(e), e.message, url, sleep_time))
+            time.sleep(sleep_time)
+            sleep_time = min(sleep_time * 2.0, 30.0)
 
 output_type_mapping = {
     'mbtiles': tilepack.outputter.MbtilesOutput,
