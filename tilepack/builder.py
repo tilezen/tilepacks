@@ -17,12 +17,13 @@ def cover_bbox(min_lon, min_lat, max_lon, max_lat, zoom):
 # def fetch_tile(x, y, z, layer, format, api_key):
 def fetch_tile(format_args):
     while True:
+        url = 'https://vector.mapzen.com/osm/{layer}/{zoom}/{x}/{y}.{fmt}?api_key={api_key}'.format(**format_args)
         try:
-            url = 'https://vector.mapzen.com/osm/{layer}/{zoom}/{x}/{y}.{fmt}?api_key={api_key}'.format(**format_args)
             resp = requests.get(url)
+            resp.raise_for_status()
             return (format_args, resp.content)
-        except requests.exceptions.ConnectionError:
-            print("Connection error, retrying")
+        except requests.exceptions.RequestException, e:
+            print("{} -- {} ... while retrieving {}, retrying".format(type(e), e.message, url))
 
 output_type_mapping = {
     'mbtiles': tilepack.outputter.MbtilesOutput,
