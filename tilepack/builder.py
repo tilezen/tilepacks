@@ -6,6 +6,7 @@ import argparse
 import os
 import multiprocessing
 import time
+import random
 
 def cover_bbox(min_lon, min_lat, max_lon, max_lat, zoom):
     min_x, max_y, _ = point_to_tile(min_lon, min_lat, zoom)
@@ -25,9 +26,12 @@ def fetch_tile(format_args):
             resp.raise_for_status()
             return (format_args, resp.content)
         except requests.exceptions.RequestException as e:
-            print("{} while retrieving {}, retrying after {} sec".format(type(e), url, sleep_time))
+            if isinstance(e, requests.exceptions.HTTPError):
+                print("HTTP error {} -- {} while retrieving {}, retrying after {} sec".format(e.response.status_code, e.response.text, url, sleep_time))
+            else:
+                print("{} while retrieving {}, retrying after {} sec".format(type(e), url, sleep_time))
             time.sleep(sleep_time)
-            sleep_time = min(sleep_time * 2.0, 30.0)
+            sleep_time = min(sleep_time * 2.0, 30.0) * random.uniform(1.0, 1.7)
 
 output_type_mapping = {
     'mbtiles': tilepack.outputter.MbtilesOutput,
@@ -110,7 +114,7 @@ def main():
 
     api_key = os.environ.get('MAPZEN_API_KEY')
 
-    output_formats = args.output_format.split(',')
+    output_formats = args.output_formats.split(',')
     build_tile_packages(
         args.min_lon,
         args.min_lat,
