@@ -3,6 +3,7 @@ from tilepack.builder import cover_bbox, build_tile_packages
 import argparse
 import os
 import requests
+import time
 
 def main():
     parser = argparse.ArgumentParser()
@@ -31,6 +32,8 @@ def main():
         bbox = feature['bbox']
         min_lon, min_lat, max_lon, max_lat = float(bbox['left']), float(bbox['bottom']), float(bbox['right']), float(bbox['top'])
 
+        start = time.time()
+
         build_tile_packages(
             min_lon,
             min_lat,
@@ -44,7 +47,9 @@ def main():
             ['mbtiles', 'zipfile'],
             api_key)
 
-        print("Wrote packages for {}".format(name))
+        elapsed = time.time() - start
+
+        print("Wrote packages for {} in {:0.2f} sec".format(name, elapsed))
 
 if __name__ == '__main__':
     main()
