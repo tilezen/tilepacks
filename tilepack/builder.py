@@ -29,6 +29,40 @@ output_type_mapping = {
     'zipfile': tilepack.outputter.ZipfileOutput,
 }
 
+def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
+        layer, tile_format, output, output_formats, api_key):
+
+    fetches = []
+    for zoom in range(min_zoom, max_zoom + 1):
+        for x, y, z in cover_bbox(min_lon, min_lat, max_lon, max_lat, zoom=zoom):
+            fetches.append(dict(x=x, y=y, zoom=z, layer=layer, fmt=tile_format, api_key=api_key))
+
+    tiles_to_get = len(fetches)
+
+    tile_ouputters = [output_type_mapping.get(t).build_from_basename(output) for t in set(output_formats)]
+
+    try:
+        p = multiprocessing.Pool(multiprocessing.cpu_count() * 10)
+
+        for t in tile_ouputters:
+            t.open()
+            t.add_metadata('name', output)
+            # FIXME: Need to include the `json` key
+            t.add_metadata('format', 'application/vnd.mapbox-vector-tile')
+            t.add_metadata('bounds', ','.join(map(str, [min_lon, min_lat, max_lon, max_lat])))
+            t.add_metadata('minzoom', min_zoom)
+            t.add_metadata('maxzoom', max_zoom)
+
+        for i, (format_args, data) in enumerate(p.imap_unordered(fetch_tile, fetches)):
+            for t in tile_ouputters:
+                t.add_tile(format_args, data)
+    finally:
+        p.close()
+        p.join()
+        for t in tile_ouputters:
+            t.close()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('min_lon',
@@ -57,7 +91,7 @@ def main():
     parser.add_argument('--tile-format',
         default='mvt',
         help='The Mapzen Vector Tile format to request')
-    parser.add_argument('--output-format',
+    parser.add_argument('--output-formats',
         default='mbtiles,zipfile',
         type=lambda x: x.split(','),
         help='A comma-separated list of output formats to write to')
@@ -65,33 +99,17 @@ def main():
 
     api_key = os.environ.get('MAPZEN_API_KEY')
 
-    p = multiprocessing.Pool(multiprocessing.cpu_count() * 10)
-
-    fetches = []
-    for zoom in range(args.min_zoom, args.max_zoom + 1):
-        for x, y, z in cover_bbox(args.min_lon, args.min_lat, args.max_lon, args.max_lat, zoom=zoom):
-            fetches.append(dict(x=x, y=y, zoom=z, layer=args.layer, fmt=args.tile_format, api_key=api_key))
-
-    tiles_to_get = len(fetches)
-
-    tile_ouputters = [output_type_mapping.get(t).build_from_basename(args.output) for t in set(args.output_format)]
-
-    try:
-        for t in tile_ouputters:
-            t.open()
-            t.add_metadata('name', args.output)
-            # FIXME: Need to include the `json` key
-            t.add_metadata('format', 'application/vnd.mapbox-vector-tile')
-            t.add_metadata('bounds', ','.join(map(str, [args.min_lon, args.min_lat, args.max_lon, args.max_lat])))
-            t.add_metadata('minzoom', args.min_zoom)
-            t.add_metadata('maxzoom', args.max_zoom)
-
-        for i, (format_args, data) in enumerate(p.imap_unordered(fetch_tile, fetches)):
-            for t in tile_ouputters:
-                t.add_tile(format_args, data)
-    finally:
-        for t in tile_ouputters:
-            t.close()
+    build_tile_packages(
+        args.min_lon,
+        args.min_lat,
+        args.max_lon,
+        args.max_lat,
+        args.min_zoom,
+        args.max_zoom,
+        args.layer,
+        args.tile_formats,
+        api_key
+    )
 
 if __name__ == '__main__':
     main()
