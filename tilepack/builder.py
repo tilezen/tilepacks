@@ -24,7 +24,7 @@ def fetch_tile(format_args):
             resp = requests.get(url)
             resp.raise_for_status()
             return (format_args, resp.content)
-        except requests.exceptions.RequestException, e:
+        except requests.exceptions.RequestException as e:
             print("{} -- {} ... while retrieving {}, retrying after {} sec".format(type(e), e.message, url, sleep_time))
             time.sleep(sleep_time)
             sleep_time = min(sleep_time * 2.0, 30.0)
