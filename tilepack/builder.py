@@ -39,7 +39,14 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
 
     tiles_to_get = len(fetches)
 
-    tile_ouputters = [output_type_mapping.get(t).build_from_basename(output) for t in set(output_formats)]
+    tile_ouputters = []
+    for t in set(output_formats):
+        builder_class = output_type_mapping.get(t)
+
+        if not builder_class:
+            raise KeyError("Unknown output format {}".format(t))
+
+        tile_ouputters.append(builder_class.build_from_basename(output))
 
     try:
         p = multiprocessing.Pool(multiprocessing.cpu_count() * 10)
@@ -93,12 +100,12 @@ def main():
         help='The Mapzen Vector Tile format to request')
     parser.add_argument('--output-formats',
         default='mbtiles,zipfile',
-        type=lambda x: x.split(','),
         help='A comma-separated list of output formats to write to')
     args = parser.parse_args()
 
     api_key = os.environ.get('MAPZEN_API_KEY')
 
+    output_formats = args.output_format.split(',')
     build_tile_packages(
         args.min_lon,
         args.min_lat,
