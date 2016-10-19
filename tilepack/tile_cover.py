@@ -13,7 +13,7 @@ def main():
         type=int,
         help='The maximum zoom level to include')
     parser.add_argument('--cities_url',
-        default="https://raw.githubusercontent.com/mapzen/metroextractor-cities/master/cities.geojson",
+        default="https://raw.githubusercontent.com/mapzen/metro-extracts/master/cities.json",
         help='A GeoJSON URL with features to cover with tiles')
     parser.add_argument('--output_prefix',
         default="output",
@@ -24,15 +24,10 @@ def main():
     cities_resp.raise_for_status()
     cities_data = cities_resp.json()
 
-    features = cities_data['features']
-    for feature in features:
-        min_lon, min_lat, max_lon, max_lat = feature['bbox']
-        feature['properties']['area'] = (max_lon - min_lon) * (max_lat - min_lat)
-    biggest_features = sorted(features, key=lambda f: f['properties']['area'], reverse=True)[:200]
-
-    for feature in biggest_features:
-        name = feature['properties']['name']
-        min_lon, min_lat, max_lon, max_lat = feature['bbox']
+    for feature in cities_data:
+        name = feature['id']
+        bbox = feature['bbox']
+        min_lon, min_lat, max_lon, max_lat = float(bbox['left']), float(bbox['bottom']), float(bbox['right']), float(bbox['top'])
         count = 0
         with open(os.path.join(args.output_prefix, '{}.csv'.format(name)), 'w') as f:
             for zoom in range(args.min_zoom, args.max_zoom + 1):
