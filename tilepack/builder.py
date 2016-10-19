@@ -114,8 +114,10 @@ def main():
         args.min_zoom,
         args.max_zoom,
         args.layer,
-        args.tile_formats,
-        api_key
+        args.tile_format,
+        args.output,
+        output_formats,
+        api_key,
     )
 
 if __name__ == '__main__':

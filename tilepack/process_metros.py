@@ -12,10 +12,10 @@ def main():
     parser.add_argument('max_zoom',
         type=int,
         help='The maximum zoom level to include')
-    parser.add_argument('--cities_url',
+    parser.add_argument('--cities-url',
         default="https://raw.githubusercontent.com/mapzen/metro-extracts/master/cities.json",
         help='A GeoJSON URL with features to cover with tiles')
-    parser.add_argument('--output_prefix',
+    parser.add_argument('--output-prefix',
         default="output",
         help='The path prefix to output coverage data to')
     args = parser.parse_args()
@@ -40,8 +40,8 @@ def main():
             args.max_zoom,
             'all',
             'mvt',
-            args.output,
-            'mbtiles,zipfile',
+            os.path.join(args.output_prefix, name),
+            ['mbtiles', 'zipfile'],
             api_key)
 
         print("Wrote packages for {}".format(name))
