@@ -65,7 +65,7 @@ def main():
 
     api_key = os.environ.get('MAPZEN_API_KEY')
 
-    p = multiprocessing.Pool(25)
+    p = multiprocessing.Pool(multiprocessing.cpu_count() * 10)
 
     fetches = []
     for zoom in range(args.min_zoom, args.max_zoom + 1):
