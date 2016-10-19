@@ -79,6 +79,12 @@ def main():
     try:
         for t in tile_ouputters:
             t.open()
+            t.add_metadata('name', args.output)
+            # FIXME: Need to include the `json` key
+            t.add_metadata('format', 'application/vnd.mapbox-vector-tile')
+            t.add_metadata('bounds', ','.join(map(str, [args.min_lon, args.min_lat, args.max_lon, args.max_lat])))
+            t.add_metadata('minzoom', args.min_zoom)
+            t.add_metadata('maxzoom', args.max_zoom)
 
         for i, (format_args, data) in enumerate(p.imap_unordered(fetch_tile, fetches)):
             for t in tile_ouputters:

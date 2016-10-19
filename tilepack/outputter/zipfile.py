@@ -1,4 +1,5 @@
 import zipfile
+import json
 
 class ZipfileOutput(object):
     @staticmethod
@@ -8,6 +9,10 @@ class ZipfileOutput(object):
     def __init__(self, filename, **kwargs):
         self._filename = filename
         self._zipfile = None
+        self._metadata = {}
+
+    def add_metadata(self, name, value):
+        self._metadata[name] = value
 
     def open(self):
         self._zipfile = zipfile.ZipFile(self._filename, 'w', compression=zipfile.ZIP_DEFLATED)
@@ -17,5 +22,6 @@ class ZipfileOutput(object):
         self._zipfile.writestr(key, data)
 
     def close(self):
+        self._zipfile.writestr('metadata.json', json.dumps(dict(metadata=self._metadata)).encode('utf-8'))
         self._zipfile.close()
 

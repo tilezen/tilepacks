@@ -66,6 +66,20 @@ class MbtilesOutput(object):
 
         return (2 ** zoom) - 1 - row
 
+    def add_metadata(self, name, value):
+        self._cur.execute("""
+            INSERT INTO metadata (
+                name, value
+            ) VALUES (
+                ?, ?
+            );
+            """,
+            (
+                name,
+                value,
+            )
+        )
+
     def open(self):
         self._conn = sqlite3.connect(self._filename)
         self._cur = self._conn.cursor()
