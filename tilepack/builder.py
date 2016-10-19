@@ -20,7 +20,7 @@ def cover_bbox(min_lon, min_lat, max_lon, max_lat, zoom):
 def fetch_tile(format_args):
     sleep_time = 0.5
     while True:
-        url = 'https://vector.mapzen.com/osm/{layer}/{zoom}/{x}/{y}.{fmt}?api_key={api_key}'.format(**format_args)
+        url = 'https://tile.mapzen.com/mapzen/vector/v1/{layer}/{zoom}/{x}/{y}.{fmt}?api_key={api_key}'.format(**format_args)
         try:
             resp = requests.get(url)
             resp.raise_for_status()
