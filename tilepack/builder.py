@@ -131,7 +131,7 @@ def main():
         args.max_lat,
         args.min_zoom,
         args.max_zoom,
-        args.layer,
+        'all',
         args.tile_format,
         args.output,
         output_formats,
