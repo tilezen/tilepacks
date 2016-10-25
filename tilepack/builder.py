@@ -7,6 +7,7 @@ import os
 import multiprocessing
 import time
 import random
+import traceback
 
 def cover_bbox(min_lon, min_lat, max_lon, max_lat, zoom):
     min_x, max_y, _ = point_to_tile(min_lon, min_lat, zoom)
@@ -36,6 +37,10 @@ def fetch_tile(format_args):
                 )
             time.sleep(sleep_time)
             sleep_time = min(sleep_time * 2.0, 30.0) * random.uniform(1.0, 1.7)
+        except Exception as e:
+            print("Ran into an unexpected exception: {}".format(e))
+            traceback.print_tb()
+            raise
 
 output_type_mapping = {
     'mbtiles': tilepack.outputter.MbtilesOutput,
@@ -79,6 +84,9 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
 
             if i % 500 == 0:
                 print("Wrote out {} tiles for {}".format(i, output))
+
+        print("Wrote out {} tiles for {}".format(i, output))
+
     finally:
         p.close()
         p.join()
