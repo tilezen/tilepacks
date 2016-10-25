@@ -117,7 +117,7 @@ def main():
         help='A comma-separated list of output formats to write to')
     parser.add_argument('-j', '--concurrency',
         type=int,
-        default=lambda: multiprocessing.cpu_count() * 8,
+        default=multiprocessing.cpu_count() * 8,
         help='The size of the process pool to use when downloading tiles')
     args = parser.parse_args()
 
