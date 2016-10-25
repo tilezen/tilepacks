@@ -76,6 +76,9 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
         for i, (format_args, data) in enumerate(p.imap_unordered(fetch_tile, fetches)):
             for t in tile_ouputters:
                 t.add_tile(format_args, data)
+
+            if i % 500 == 0:
+                print("Wrote out {} tiles for {}".format(i, output))
     finally:
         p.close()
         p.join()
