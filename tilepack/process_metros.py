@@ -3,7 +3,8 @@ from tilepack.builder import cover_bbox, build_tile_packages
 import argparse
 import os
 import requests
-import time
+import datetime
+import json
 
 def main():
     parser = argparse.ArgumentParser()
@@ -19,6 +20,10 @@ def main():
     parser.add_argument('--output-prefix',
         default="output",
         help='The path prefix to output coverage data to')
+    parser.add_argument('-j', '--concurrency',
+        type=int,
+        default=lambda: multiprocessing.cpu_count() * 8,
+        help='The size of the process pool to use when downloading tiles')
     args = parser.parse_args()
 
     cities_resp = requests.get(args.cities_url)
@@ -32,9 +37,9 @@ def main():
         bbox = feature['bbox']
         min_lon, min_lat, max_lon, max_lat = float(bbox['left']), float(bbox['bottom']), float(bbox['right']), float(bbox['top'])
 
-        start = time.time()
+        start = datetime.datetime.utcnow()
 
-        build_tile_packages(
+        job_results = build_tile_packages(
             min_lon,
             min_lat,
             max_lon,
@@ -45,9 +50,22 @@ def main():
             'mvt',
             os.path.join(args.output_prefix, name),
             ['mbtiles', 'zipfile'],
-            api_key)
+            api_key,
+            args.concurrency)
 
-        elapsed = time.time() - start
+        stop = datetime.datetime.utcnow()
+        elapsed = (stop - start).total_seconds()
+
+        metadata = {
+            'metro_name': name,
+            'extract_start_datetime': start.isoformat(),
+            'extract_finish_datetime': stop.isoformat(),
+            'number_tiles': job_results['number_tiles'],
+        }
+
+        metadata_filename = os.path.join(args.output_prefix, '{}_metadata.json'.format(name))
+        with open(metadata_filename, 'w') as f:
+            json.dump(metadata, f)
 
         print("Wrote packages for {} in {:0.2f} sec".format(name, elapsed))
 

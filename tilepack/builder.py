@@ -43,7 +43,7 @@ output_type_mapping = {
 }
 
 def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
-        layer, tile_format, output, output_formats, api_key):
+        layer, tile_format, output, output_formats, api_key, concurrency):
 
     fetches = []
     for zoom in range(min_zoom, max_zoom + 1):
@@ -62,7 +62,7 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
         tile_ouputters.append(builder_class.build_from_basename(output))
 
     try:
-        p = multiprocessing.Pool(multiprocessing.cpu_count() * 10)
+        p = multiprocessing.Pool(concurrency)
 
         for t in tile_ouputters:
             t.open()
@@ -81,6 +81,10 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
         p.join()
         for t in tile_ouputters:
             t.close()
+
+    return {
+        'number_tiles': tiles_to_get,
+    }
 
 
 def main():
@@ -105,15 +109,16 @@ def main():
         help='The maximum zoom level to include')
     parser.add_argument('output',
         help='The filename for the output tile package')
-    parser.add_argument('--layer',
-        default='all',
-        help='The Mapzen Vector Tile layer to request')
     parser.add_argument('--tile-format',
         default='mvt',
         help='The Mapzen Vector Tile format to request')
     parser.add_argument('--output-formats',
         default='mbtiles,zipfile',
         help='A comma-separated list of output formats to write to')
+    parser.add_argument('-j', '--concurrency',
+        type=int,
+        default=lambda: multiprocessing.cpu_count() * 8,
+        help='The size of the process pool to use when downloading tiles')
     args = parser.parse_args()
 
     api_key = os.environ.get('MAPZEN_API_KEY')
@@ -131,6 +136,7 @@ def main():
         args.output,
         output_formats,
         api_key,
+        args.concurrency,
     )
 
 if __name__ == '__main__':
