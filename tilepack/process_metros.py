@@ -16,7 +16,7 @@ def main():
         type=int,
         help='The maximum zoom level to include')
     parser.add_argument('--cities-url',
-        default="https://raw.githubusercontent.com/mapzen/metro-extracts/master/cities.json",
+        default="https://mapzen.com/data/metro-extracts/cities-extractor.json",
         help='A GeoJSON URL with features to cover with tiles')
     parser.add_argument('--output-prefix',
         default="output",
