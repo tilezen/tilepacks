@@ -28,9 +28,15 @@ def fetch_tile(format_args):
             return (format_args, resp.content)
         except requests.exceptions.RequestException as e:
             if isinstance(e, requests.exceptions.HTTPError):
-                print("HTTP error {} -- {} while retrieving {}, retrying after {:0.2f} sec".format(
-                    e.response.status_code, e.response.text, url, sleep_time)
-                )
+                if e.status_code == 404:
+                    print("HTTP 404 -- {} while retrieving {}. Not trying again.".format(
+                        e.response.status_code, e.response.text, url)
+                    )
+                    return (format_args, None)
+                else:
+                    print("HTTP error {} -- {} while retrieving {}, retrying after {:0.2f} sec".format(
+                        e.response.status_code, e.response.text, url, sleep_time)
+                    )
             else:
                 print("{} while retrieving {}, retrying after {:0.2f} sec".format(
                     type(e), url, sleep_time)
@@ -56,6 +62,7 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
             fetches.append(dict(x=x, y=y, zoom=z, layer=layer, fmt=tile_format, api_key=api_key))
 
     tiles_to_get = len(fetches)
+    tiles_written = 0
 
     tile_ouputters = []
     for t in set(output_formats):
@@ -80,20 +87,22 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
 
         for i, (format_args, data) in enumerate(p.imap_unordered(fetch_tile, fetches)):
             for t in tile_ouputters:
-                t.add_tile(format_args, data)
+                if data:
+                    tiles_written += 1
+                    t.add_tile(format_args, data)
 
             if i % 500 == 0:
                 print("Wrote out {} of {} ({:0.1}%) tiles for {}".format(
-                    i,
+                    tiles_written,
                     tiles_to_get,
-                    i / float(tiles_to_get),
+                    tiles_written / float(tiles_to_get),
                     output
                 ))
 
         print("Wrote out {} of {} ({:0.1}%) tiles for {}".format(
-            i,
+            tiles_written,
             tiles_to_get,
-            i / float(tiles_to_get),
+            tiles_written / float(tiles_to_get),
             output
         ))
 
