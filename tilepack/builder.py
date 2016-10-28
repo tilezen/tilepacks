@@ -22,12 +22,12 @@ def fetch_tile(format_args):
             if isinstance(e, requests.exceptions.HTTPError):
                 if e.status_code == 404:
                     print("HTTP 404 -- {} while retrieving {}. Not trying again.".format(
-                        e.response.status_code, e.response.text, url)
+                        e.status_code, e.response.text, url)
                     )
                     return (format_args, None)
                 else:
                     print("HTTP error {} -- {} while retrieving {}, retrying after {:0.2f} sec".format(
-                        e.response.status_code, e.response.text, url, sleep_time)
+                        e.status_code, e.response.text, url, sleep_time)
                     )
             else:
                 print("{} while retrieving {}, retrying after {:0.2f} sec".format(
@@ -83,14 +83,14 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
                     t.add_tile(format_args, data)
 
             if i % 500 == 0:
-                print("Wrote out {} of {} ({:0.1}%) tiles for {}".format(
+                print("Wrote out {} of {} ({:0.2f}%) tiles for {}".format(
                     tiles_written,
                     tiles_to_get,
                     tiles_written / float(tiles_to_get),
                     output
                 ))
 
-        print("Wrote out {} of {} ({:0.1}%) tiles for {}".format(
+        print("Wrote out {} of {} ({:0.2f}%) tiles for {}".format(
             tiles_written,
             tiles_to_get,
             tiles_written / float(tiles_to_get),
