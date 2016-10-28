@@ -1,4 +1,3 @@
-from tilepack.util import point_to_tile
 import tilepack.outputter
 import requests
 import zipfile
@@ -8,14 +7,7 @@ import multiprocessing
 import time
 import random
 import traceback
-
-def cover_bbox(min_lon, min_lat, max_lon, max_lat, zoom):
-    min_x, max_y, _ = point_to_tile(min_lon, min_lat, zoom)
-    max_x, min_y, _ = point_to_tile(max_lon, max_lat, zoom)
-
-    for x in range(min_x, max_x + 1):
-        for y in range(min_y, max_y + 1):
-            yield (x, y, zoom)
+import mercantile
 
 # def fetch_tile(x, y, z, layer, format, api_key):
 def fetch_tile(format_args):
@@ -57,9 +49,8 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
         layer, tile_format, output, output_formats, api_key, concurrency):
 
     fetches = []
-    for zoom in range(min_zoom, max_zoom + 1):
-        for x, y, z in cover_bbox(min_lon, min_lat, max_lon, max_lat, zoom=zoom):
-            fetches.append(dict(x=x, y=y, zoom=z, layer=layer, fmt=tile_format, api_key=api_key))
+    for x, y, z in mercantile.tiles(min_lon, min_lat, max_lon, max_lat, range(min_zoom, max_zoom + 1)):
+        fetches.append(dict(x=x, y=y, zoom=z, layer=layer, fmt=tile_format, api_key=api_key))
 
     tiles_to_get = len(fetches)
     tiles_written = 0
