@@ -23,7 +23,7 @@ def fetch_tile(format_args):
     while True:
         url = 'https://tile.mapzen.com/mapzen/vector/v1/{layer}/{zoom}/{x}/{y}.{fmt}?api_key={api_key}'.format(**format_args)
         try:
-            resp = requests.get(url)
+            resp = requests.get(url, timeout=(6.1, 30))
             resp.raise_for_status()
             return (format_args, resp.content)
         except requests.exceptions.RequestException as e:
