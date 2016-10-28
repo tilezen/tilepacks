@@ -35,6 +35,11 @@ def main():
 
     for feature in cities_data:
         name = feature['id']
+        metadata_filename = os.path.join(args.output_prefix, '{}_metadata.json'.format(name))
+        if os.path.exists(metadata_filename):
+            print("Skipping {} because the metadata file already exists".format(name))
+            continue
+
         bbox = feature['bbox']
         min_lon, min_lat, max_lon, max_lat = float(bbox['left']), float(bbox['bottom']), float(bbox['right']), float(bbox['top'])
 
@@ -64,7 +69,6 @@ def main():
             'number_tiles': job_results['number_tiles'],
         }
 
-        metadata_filename = os.path.join(args.output_prefix, '{}_metadata.json'.format(name))
         with open(metadata_filename, 'w') as f:
             json.dump(metadata, f)
 
