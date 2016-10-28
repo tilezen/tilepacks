@@ -83,9 +83,19 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
                 t.add_tile(format_args, data)
 
             if i % 500 == 0:
-                print("Wrote out {} tiles for {}".format(i, output))
+                print("Wrote out {} of {} ({:0.1}%) tiles for {}".format(
+                    i,
+                    tiles_to_get,
+                    i / float(tiles_to_get),
+                    output
+                ))
 
-        print("Wrote out {} tiles for {}".format(i, output))
+        print("Wrote out {} of {} ({:0.1}%) tiles for {}".format(
+            i,
+            tiles_to_get,
+            i / float(tiles_to_get),
+            output
+        ))
 
     finally:
         p.close()
