@@ -9,13 +9,17 @@ import random
 import traceback
 import mercantile
 
+sess = requests.Session()
+adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=200)
+sess.mount('https://', adapter)
+
 # def fetch_tile(x, y, z, layer, format, api_key):
 def fetch_tile(format_args):
     sleep_time = 0.5 * random.uniform(1.0, 1.7)
     while True:
         url = 'https://tile.mapzen.com/mapzen/vector/v1/{layer}/{zoom}/{x}/{y}.{fmt}?api_key={api_key}'.format(**format_args)
         try:
-            resp = requests.get(url, timeout=(6.1, 30))
+            resp = sess.get(url, timeout=(6.1, 30))
             resp.raise_for_status()
             return (format_args, resp.content)
         except requests.exceptions.RequestException as e:
