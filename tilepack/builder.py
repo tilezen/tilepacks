@@ -80,32 +80,32 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
             t.add_metadata('minzoom', min_zoom)
             t.add_metadata('maxzoom', max_zoom)
 
-        for i, (format_args, data) in enumerate(p.imap_unordered(fetch_tile, fetches)):
+        for format_args, data in p.imap_unordered(fetch_tile, fetches):
             for t in tile_ouputters:
                 if data:
-                    tiles_written += 1
                     t.add_tile(format_args, data)
+            tiles_written += 1
 
-            if i % 500 == 0:
+            if tiles_written % 500 == 0:
                 print("Wrote out {} of {} ({:0.2f}%) tiles for {}".format(
                     tiles_written,
                     tiles_to_get,
-                    tiles_written / float(tiles_to_get),
+                    (tiles_written / float(tiles_to_get)) * 100.0,
                     output
                 ))
-
-        print("Wrote out {} of {} ({:0.2f}%) tiles for {}".format(
-            tiles_written,
-            tiles_to_get,
-            tiles_written / float(tiles_to_get),
-            output
-        ))
 
     finally:
         p.close()
         p.join()
         for t in tile_ouputters:
             t.close()
+
+        print("Wrote out {} of {} ({:0.2f}%) tiles for {}".format(
+            tiles_written,
+            tiles_to_get,
+            (tiles_written / float(tiles_to_get)) * 100.0,
+            output
+        ))
 
     return {
         'number_tiles': tiles_to_get,
