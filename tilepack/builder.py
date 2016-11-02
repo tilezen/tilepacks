@@ -8,6 +8,8 @@ import time
 import random
 import traceback
 import mercantile
+import logging
+import csv
 
 sess = requests.Session()
 adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=200)
@@ -16,22 +18,38 @@ sess.mount('https://', adapter)
 # def fetch_tile(x, y, z, layer, format, api_key):
 def fetch_tile(format_args):
     sleep_time = 0.5 * random.uniform(1.0, 1.7)
+    response_info = []
     while True:
         url = 'https://tile.mapzen.com/mapzen/vector/v1/{layer}/{zoom}/{x}/{y}.{fmt}?api_key={api_key}'.format(**format_args)
         try:
+            start = time.time()
+
             resp = sess.get(url, timeout=(6.1, 30))
+
+            data = resp.content
+            finish = time.time()
+
+            response_info.append({
+                "url":                      url,
+                "response status":          resp.status_code,
+                "server":                   resp.headers.get('Server'),
+                "time to headers millis":   int(resp.elapsed.total_seconds() * 1000),
+                "time for content millis":  int((finish - start) * 1000),
+                "response length bytes":    len(data),
+            })
+
             resp.raise_for_status()
-            return (format_args, resp.content)
+            return (format_args, response_info, data)
         except requests.exceptions.RequestException as e:
             if isinstance(e, requests.exceptions.HTTPError):
-                if e.status_code == 404:
+                if e.response.status_code == 404:
                     print("HTTP 404 -- {} while retrieving {}. Not trying again.".format(
-                        e.status_code, e.response.text, url)
+                        e.response.status_code, e.response.text, url)
                     )
-                    return (format_args, None)
+                    return (format_args, response_info, None)
                 else:
                     print("HTTP error {} -- {} while retrieving {}, retrying after {:0.2f} sec".format(
-                        e.status_code, e.response.text, url, sleep_time)
+                        e.response.status_code, e.response.text, url, sleep_time)
                     )
             else:
                 print("{} while retrieving {}, retrying after {:0.2f} sec".format(
@@ -58,6 +76,11 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
 
     tiles_to_get = len(fetches)
     tiles_written = 0
+    response_info_writer = csv.DictWriter(
+        open('{}.responses.csv'.format(output), 'w'),
+        ["url", "response status", "server", "time to headers millis", "time for content millis", "response length bytes"],
+    )
+    response_info_writer.writeheader()
 
     tile_ouputters = []
     for t in set(output_formats):
@@ -80,12 +103,14 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
             t.add_metadata('minzoom', min_zoom)
             t.add_metadata('maxzoom', max_zoom)
 
-        for format_args, data in p.imap_unordered(fetch_tile, fetches):
+        for format_args, response_info, data in p.imap_unordered(fetch_tile, fetches):
             for t in tile_ouputters:
                 if data:
                     t.add_tile(format_args, data)
-            tiles_written += 1
 
+            response_info_writer.writerows(response_info)
+
+            tiles_written += 1
             if tiles_written % 500 == 0:
                 print("Wrote out {} of {} ({:0.2f}%) tiles for {}".format(
                     tiles_written,
