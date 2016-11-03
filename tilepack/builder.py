@@ -30,12 +30,12 @@ def fetch_tile(format_args):
             finish = time.time()
 
             response_info.append({
-                "url":                      url,
-                "response status":          resp.status_code,
-                "server":                   resp.headers.get('Server'),
-                "time to headers millis":   int(resp.elapsed.total_seconds() * 1000),
-                "time for content millis":  int((finish - start) * 1000),
-                "response length bytes":    len(data),
+                "url": url,
+                "response status": resp.status_code,
+                "server": resp.headers.get('Server'),
+                "time to headers millis": int(resp.elapsed.total_seconds() * 1000),
+                "time for content millis": int((finish - start) * 1000),
+                "response length bytes": len(data),
             })
 
             resp.raise_for_status()
