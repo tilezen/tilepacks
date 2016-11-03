@@ -1,5 +1,4 @@
-from tilepack.builder import cover_bbox
-
+import mercantile
 import argparse
 import os
 import requests
@@ -30,10 +29,9 @@ def main():
         min_lon, min_lat, max_lon, max_lat = float(bbox['left']), float(bbox['bottom']), float(bbox['right']), float(bbox['top'])
         count = 0
         with open(os.path.join(args.output_prefix, '{}.csv'.format(name)), 'w') as f:
-            for zoom in range(args.min_zoom, args.max_zoom + 1):
-                for x, y, z in cover_bbox(min_lon, min_lat, max_lon, max_lat, zoom=zoom):
-                    f.write('{}/{}/{}\n'.format(z, x, y))
-                    count += 1
+            for x, y, z in mercantile.tiles(min_lon, min_lat, max_lon, max_lat, range(args.min_zoom, args.max_zoom + 1)):
+                f.write('{}/{}/{}\n'.format(z, x, y))
+                count += 1
         print("Wrote out {} tiles to {}".format(count, f.name))
 
 if __name__ == '__main__':
