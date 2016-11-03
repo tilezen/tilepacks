@@ -1,4 +1,4 @@
-from tilepack.builder import cover_bbox, build_tile_packages
+from tilepack.builder import build_tile_packages
 
 import argparse
 import os
