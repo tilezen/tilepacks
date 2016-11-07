@@ -65,6 +65,7 @@ def fetch_tile(format_args):
 output_type_mapping = {
     'mbtiles': tilepack.outputter.MbtilesOutput,
     'zipfile': tilepack.outputter.ZipfileOutput,
+    'null': tilepack.outputter.NullOutput,
 }
 
 def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
@@ -164,7 +165,7 @@ def main():
         help='The Mapzen Vector Tile format to request')
     parser.add_argument('--output-formats',
         default='mbtiles,zipfile',
-        help='A comma-separated list of output formats to write to')
+        help='A comma-separated list of output formats to write to (mbtiles, zipfile, or null)')
     parser.add_argument('-j', '--concurrency',
         type=int,
         default=multiprocessing.cpu_count() * 8,
