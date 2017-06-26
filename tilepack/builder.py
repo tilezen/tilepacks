@@ -44,12 +44,12 @@ def fetch_tile(format_args):
         except requests.exceptions.RequestException as e:
             if isinstance(e, requests.exceptions.HTTPError):
                 if e.response.status_code == 404:
-                    print("HTTP 404 -- {} while retrieving {}. {} Not trying again.".format(
+                    print("HTTP {} -- {} while retrieving {}. Not trying again.".format(
                         e.response.status_code, e.response.text, url)
                     )
                     return (format_args, response_info, None)
                 else:
-                    print("HTTP error {} -- {} while retrieving {}, retrying after {:0.2f} sec".format(
+                    print("HTTP {} -- {} while retrieving {}, retrying after {:0.2f} sec".format(
                         e.response.status_code, e.response.text, url, sleep_time)
                     )
             else:
