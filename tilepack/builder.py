@@ -172,21 +172,20 @@ def main():
     parser.add_argument('--type',
         default='vector',
         choices=['vector', 'terrain'],
-        help='Type (vector or terrain)')
+        help='Type')
     parser.add_argument('--tile-size',
         default=512,
         choices=[256, 512],
-        help='The size of tile (256 or 512)')
+        help='The size of tile')
     parser.add_argument('--tile-format',
         default='mvt',
         help='The Mapzen Vector Tile format to request')
     parser.add_argument('--tile-compression',
         default=False,
         action='store_true',
-        help='Compression method to compress individual tiles')
+        help='Compress individual tiles')
     parser.add_argument('--output-formats',
         default='mbtiles,zipfile',
-        choices=['mbtiles', 'zipfile', 'null'],
         help='A comma-separated list of output formats to write to (mbtiles, zipfile, or null)')
     parser.add_argument('-j', '--concurrency',
         type=int,
