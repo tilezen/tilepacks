@@ -174,8 +174,8 @@ def main():
         choices=['vector', 'terrain'],
         help='Type')
     parser.add_argument('--tile-size',
-        default=512,
-        choices=[256, 512],
+        default='512',
+        choices=['256', '512'],
         help='The size of tile')
     parser.add_argument('--tile-format',
         default='mvt',
