@@ -16,7 +16,6 @@ class ZipfileOutput(object):
 
     def open(self):
         self._zipfile = zipfile.ZipFile(self._filename, 'w', compression=zipfile.ZIP_DEFLATED)
-        print("zipfile is now {}".format(self._zipfile))
 
     def add_tile(self, tile_info, data):
         key = '{layer}/{zoom}/{x}/{y}.{fmt}'.format(**tile_info)
@@ -25,4 +24,3 @@ class ZipfileOutput(object):
     def close(self):
         self._zipfile.writestr('metadata.json', json.dumps(dict(metadata=self._metadata)).encode('utf-8'))
         self._zipfile.close()
-
