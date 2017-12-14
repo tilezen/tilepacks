@@ -24,4 +24,3 @@ class ZipfileOutput(object):
     def close(self):
         self._zipfile.writestr('metadata.json', json.dumps(dict(metadata=self._metadata)).encode('utf-8'))
         self._zipfile.close()
-
