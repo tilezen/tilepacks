@@ -31,8 +31,10 @@ Tools to build tile packages meant for offline usage.
   defaults: MVT tiles as a zipfile and an mbtiles package.
   
   `TILE_FORMAT`: default is `mvt`. `topojson`, `json` also available
+  
   `OUTPUT_FORMATS`: default is both `zipfile` and `mbtiles`
-  `CONCURRENCY`: default is ?, x to y
+  
+  `CONCURRENCY`: default is `?`, range is `x` to `y`
 
   Sample command to grab 512px topojson tiles for San Francisco:
   
