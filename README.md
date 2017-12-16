@@ -28,7 +28,9 @@ Tools to build tile packages meant for offline usage.
   tilepack: error: the following arguments are required: min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom, output
   ```
   
-  defaults: 256px MVT tiles as a zipfile and an mbtiles package.
+  defaults: `256` px `mvt` tiles, output as a `zipfile` and an `mbtiles` package.
+  
+  parameters: 
   
   `TILE_FORMAT`: default is `mvt`. `topojson`, `json` also available
   
