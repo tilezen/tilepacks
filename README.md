@@ -30,11 +30,12 @@ Tools to build tile packages meant for offline usage.
   
   defaults: MVT tiles as a zipfile and an mbtiles package.
   
-  TILE_FORMAT: default is `mvt`. `topojson`, `json` also available
-  OUTPUT_FORMATS: default is both `zipfile` and `mbtiles`
-  CONCURRENCY: default is ?, x to y
+  `TILE_FORMAT`: default is `mvt`. `topojson`, `json` also available
+  `OUTPUT_FORMATS`: default is both `zipfile` and `mbtiles`
+  `CONCURRENCY`: default is ?, x to y
 
-  sample command for 512px topojson tiles for San Francisco:
+  Sample command to grab 512px topojson tiles for San Francisco:
   
   `MAPZEN_API_KEY=mapzen-xxxxxx tilepack -122.51489 37.70808 -122.35698 37.83239 10 16 sf --tile-size 512 --tile-format topojson`
    
+   Note that tiles above zoom 15 do not have any additional data or resolution already in a z15 tiles, so downloading 17 and 18 may be unnecessary. (If you're using Tangram, it begins overzooming at z16).
