@@ -36,7 +36,7 @@ Tools to build tile packages meant for offline usage.
   
   `OUTPUT_FORMATS`: default is both `zipfile` and `mbtiles`
   
-  `CONCURRENCY`: default is `?`, range is `x` to `y`
+  `CONCURRENCY`: default is 8
 
   Sample command to grab 512px topojson tiles for San Francisco:
   
