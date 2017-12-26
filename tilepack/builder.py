@@ -27,7 +27,12 @@ def fetch_tile(format_args):
         raise Exception("Shutdown event set")
 
     while True:
-        url = 'https://tile.mapzen.com/mapzen/{type}/v1/{size}/{layer}/{zoom}/{x}/{y}.{fmt}?api_key={api_key}'.format(**format_args)
+        url = '{url_prefix}/{type}/v1/{size}/{layer}/{zoom}/{x}/{y}.{fmt}'.format(**format_args)
+
+        api_key = format_args.get('api_key')
+        if api_key:
+            url += '?api_key={api_key}'.format(**format_args)
+
         try:
             start = time.time()
 
@@ -77,11 +82,22 @@ output_type_mapping = {
 }
 
 def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
-        type, layer, tile_size, tile_format, tile_compression, output, output_formats, api_key, concurrency):
+        type, layer, tile_size, tile_format, tile_compression, output, output_formats,
+        api_key, url_prefix, concurrency):
 
     fetches = []
     for x, y, z in mercantile.tiles(min_lon, min_lat, max_lon, max_lat, range(min_zoom, max_zoom + 1)):
-        fetches.append(dict(x=x, y=y, zoom=z, type=type, layer=layer, size=tile_size, fmt=tile_format, api_key=api_key))
+        fetches.append(dict(
+            url_prefix=url_prefix,
+            x=x,
+            y=y,
+            zoom=z,
+            type=type,
+            layer=layer,
+            size=tile_size,
+            fmt=tile_format,
+            api_key=api_key,
+        ))
 
     tiles_to_get = len(fetches)
     tiles_written = 0
@@ -215,6 +231,7 @@ def main():
     args = parser.parse_args()
 
     api_key = os.environ.get('MAPZEN_API_KEY')
+    url_prefix = os.environ.get('MAPZEN_URL_PREFIX') or "https://tile.mapzen.com/mapzen/"
 
     output_formats = args.output_formats.split(',')
     build_tile_packages(
@@ -232,6 +249,7 @@ def main():
         args.output,
         output_formats,
         api_key,
+        url_prefix,
         args.concurrency,
     )
 

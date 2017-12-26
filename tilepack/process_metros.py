@@ -36,6 +36,7 @@ def main():
     cities_data = cities_resp.json()
 
     api_key = os.environ.get('MAPZEN_API_KEY')
+    url_prefix = os.environ.get('MAPZEN_URL_PREFIX') or "https://tile.mapzen.com/mapzen/"
 
     for feature in cities_data:
         name = feature['id']
@@ -64,6 +65,7 @@ def main():
             os.path.join(args.output_prefix, name),
             ['mbtiles', 'zipfile'],
             api_key,
+            url_prefix,
             args.concurrency)
 
         stop = datetime.datetime.utcnow()
