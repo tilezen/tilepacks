@@ -1,16 +1,17 @@
-import tilepack.outputter
-import requests
-import zipfile
 import argparse
-import os
-import multiprocessing
-import time
-import random
-import traceback
-import mercantile
-import logging
 import csv
 import gzip
+import mercantile
+import multiprocessing
+import os
+import random
+import requests
+import signal
+import tilepack.outputter
+import time
+import traceback
+
+shutdown_event = multiprocessing.Event()
 
 sess = requests.Session()
 adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=200)
@@ -20,6 +21,10 @@ sess.mount('https://', adapter)
 def fetch_tile(format_args):
     sleep_time = 0.5 * random.uniform(1.0, 1.7)
     response_info = []
+
+    if shutdown_event.is_set():
+        raise Exception("Shutdown event set")
+
     while True:
         url = 'https://tile.mapzen.com/mapzen/{type}/v1/{size}/{layer}/{zoom}/{x}/{y}.{fmt}?api_key={api_key}'.format(**format_args)
         try:
@@ -45,12 +50,12 @@ def fetch_tile(format_args):
             if isinstance(e, requests.exceptions.HTTPError):
                 if e.response.status_code == 404:
                     print("HTTP {} -- {} while retrieving {}. Not trying again.".format(
-                        e.response.status_code, e.response.text, url)
+                        e.response.status_code, e.response.text.strip(), url)
                     )
                     return (format_args, response_info, None)
                 else:
                     print("HTTP {} -- {} while retrieving {}, retrying after {:0.2f} sec".format(
-                        e.response.status_code, e.response.text, url, sleep_time)
+                        e.response.status_code, e.response.text.strip(), url, sleep_time)
                     )
             else:
                 print("{} while retrieving {}, retrying after {:0.2f} sec".format(
@@ -93,20 +98,26 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
 
         tile_ouputters.append(builder_class.build_from_basename(output))
 
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    p = multiprocessing.Pool(concurrency)
+
+    def sigint_handler(signal_num, frame):
+        shutdown_event.set()
+        print("Shutdown event set")
+    signal.signal(signal.SIGINT, sigint_handler)
+
+    for t in tile_ouputters:
+        t.open()
+        t.add_metadata('name', output)
+        # FIXME: Need to include the `json` key
+        t.add_metadata('format', 'application/vnd.mapbox-vector-tile')
+        if tile_compression:
+            t.add_metadata('compression', 'deflate')
+        t.add_metadata('bounds', ','.join(map(str, [min_lon, min_lat, max_lon, max_lat])))
+        t.add_metadata('minzoom', min_zoom)
+        t.add_metadata('maxzoom', max_zoom)
+
     try:
-        p = multiprocessing.Pool(concurrency)
-
-        for t in tile_ouputters:
-            t.open()
-            t.add_metadata('name', output)
-            # FIXME: Need to include the `json` key
-            t.add_metadata('format', 'application/vnd.mapbox-vector-tile')
-            if tile_compression:
-                t.add_metadata('compression', 'deflate')
-            t.add_metadata('bounds', ','.join(map(str, [min_lon, min_lat, max_lon, max_lat])))
-            t.add_metadata('minzoom', min_zoom)
-            t.add_metadata('maxzoom', max_zoom)
-
         for format_args, response_info, data in p.imap_unordered(fetch_tile, fetches):
             for t in tile_ouputters:
                 if data:
@@ -125,19 +136,20 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
                     (tiles_written / float(tiles_to_get)) * 100.0,
                     output
                 ))
+    except Exception:
+        print("A worker rose an exception")
 
-    finally:
-        p.close()
-        p.join()
-        for t in tile_ouputters:
-            t.close()
+    p.close()
+    p.join()
+    for t in tile_ouputters:
+        t.close()
 
-        print("Wrote out {} of {} ({:0.2f}%) tiles for {}".format(
-            tiles_written,
-            tiles_to_get,
-            (tiles_written / float(tiles_to_get)) * 100.0,
-            output
-        ))
+    print("Wrote out {} of {} ({:0.2f}%) tiles for {}".format(
+        tiles_written,
+        tiles_to_get,
+        (tiles_written / float(tiles_to_get)) * 100.0,
+        output
+    ))
 
     return {
         'number_tiles': tiles_to_get,
