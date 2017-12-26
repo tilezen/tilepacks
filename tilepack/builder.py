@@ -12,6 +12,7 @@ import time
 import traceback
 
 shutdown_event = multiprocessing.Event()
+verbose = False
 
 sess = requests.Session()
 adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=200)
@@ -49,9 +50,10 @@ def fetch_tile(format_args):
         except requests.exceptions.RequestException as e:
             if isinstance(e, requests.exceptions.HTTPError):
                 if e.response.status_code == 404:
-                    print("HTTP {} -- {} while retrieving {}. Not trying again.".format(
-                        e.response.status_code, e.response.text.strip(), url)
-                    )
+                    if verbose:
+                        print("HTTP {} -- {} while retrieving {}. Not trying again.".format(
+                            e.response.status_code, e.response.text.strip(), url)
+                        )
                     return (format_args, response_info, None)
                 else:
                     print("HTTP {} -- {} while retrieving {}, retrying after {:0.2f} sec".format(
@@ -83,6 +85,7 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
 
     tiles_to_get = len(fetches)
     tiles_written = 0
+    tiles_errored = 0
     response_info_writer = csv.DictWriter(
         open('{}.responses.csv'.format(output), 'w'),
         ["url", "response status", "server", "time to headers millis", "time for content millis", "response length bytes"],
@@ -119,21 +122,24 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
 
     try:
         for format_args, response_info, data in p.imap_unordered(fetch_tile, fetches):
-            for t in tile_ouputters:
-                if data:
+            if data:
+                tiles_written += 1
+                for t in tile_ouputters:
                     if tile_compression:
                         t.add_tile(format_args, gzip.compress(data))
                     else:
                         t.add_tile(format_args, data)
+            else:
+                tiles_errored += 1
 
             response_info_writer.writerows(response_info)
 
-            tiles_written += 1
-            if tiles_written % 500 == 0:
-                print("Wrote out {} of {} ({:0.2f}%) tiles for {}".format(
+            if (tiles_written + tiles_errored) % 500 == 0:
+                print("{} good, {} errored of {} ({:0.2f}%) tiles for {}".format(
                     tiles_written,
+                    tiles_errored,
                     tiles_to_get,
-                    (tiles_written / float(tiles_to_get)) * 100.0,
+                    ((tiles_written + tiles_errored) / float(tiles_to_get)) * 100.0,
                     output
                 ))
     except Exception:
@@ -144,15 +150,18 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
     for t in tile_ouputters:
         t.close()
 
-    print("Wrote out {} of {} ({:0.2f}%) tiles for {}".format(
+    print("{} good, {} errored of {} ({:0.2f}%) tiles for {}".format(
         tiles_written,
+        tiles_errored,
         tiles_to_get,
-        (tiles_written / float(tiles_to_get)) * 100.0,
+        ((tiles_written + tiles_errored) / float(tiles_to_get)) * 100.0,
         output
     ))
 
     return {
         'number_tiles': tiles_to_get,
+        'tiles_written': tiles_written,
+        'tiles_errored': tiles_errored,
     }
 
 

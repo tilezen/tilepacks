@@ -73,11 +73,11 @@ def main():
             'metro_name': name,
             'extract_start_datetime': start.isoformat(),
             'extract_finish_datetime': stop.isoformat(),
-            'number_tiles': job_results['number_tiles'],
         }
+        metadata.update(job_results)
 
         with open(metadata_filename, 'w') as f:
-            json.dump(metadata, f)
+            json.dump(metadata, f, indent=2)
 
         print("Wrote packages for {} in {:0.2f} sec".format(name, elapsed))
 
