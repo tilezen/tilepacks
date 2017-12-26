@@ -18,6 +18,10 @@ def main():
     parser.add_argument('--cities-url',
         default="https://mapzen.com/data/metro-extracts/cities-extractor.json",
         help='A GeoJSON URL with features to cover with tiles')
+    parser.add_argument('--tile-size',
+        default="256",
+        options=["256", "512", "1024"],
+        help='The tile size')
     parser.add_argument('--output-prefix',
         default="output",
         help='The path prefix to output coverage data to')
@@ -52,8 +56,11 @@ def main():
             max_lat,
             args.min_zoom,
             args.max_zoom,
-            'all',
-            'mvt',
+            'vector',  # type
+            'all',  # layer
+            args.tile_size,
+            'mvt',  # tile format
+            False,  # individual tile compression
             os.path.join(args.output_prefix, name),
             ['mbtiles', 'zipfile'],
             api_key,
