@@ -83,7 +83,7 @@ def main():
 
         print("Wrote packages for {} in {:0.2f} sec".format(name, elapsed))
 
-        if job_results['shutdown_requested']:
+        if job_results.get('shutdown_requested'):
             break
 
 if __name__ == '__main__':
