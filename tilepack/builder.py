@@ -14,6 +14,9 @@ import traceback
 shutdown_event = multiprocessing.Event()
 verbose = False
 
+class ShutdownException(Exception):
+    pass
+
 sess = requests.Session()
 adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=200)
 sess.mount('https://', adapter)
@@ -24,7 +27,7 @@ def fetch_tile(format_args):
     response_info = []
 
     if shutdown_event.is_set():
-        raise Exception("Shutdown event set")
+        raise ShutdownException("Shutdown event set")
 
     while True:
         url = '{url_prefix}/{type}/v1/{size}/{layer}/{zoom}/{x}/{y}.{fmt}'.format(**format_args)
@@ -158,8 +161,8 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
                     ((tiles_written + tiles_errored) / float(tiles_to_get)) * 100.0,
                     output
                 ))
-    except Exception:
-        print("A worker rose an exception")
+    except ShutdownException:
+        print("Workers shut down")
 
     p.close()
     p.join()
@@ -174,11 +177,16 @@ def build_tile_packages(min_lon, min_lat, max_lon, max_lat, min_zoom, max_zoom,
         output
     ))
 
-    return {
+    output_data = {
         'number_tiles': tiles_to_get,
         'tiles_written': tiles_written,
         'tiles_errored': tiles_errored,
     }
+
+    if shutdown_event.is_set():
+        output_data['shutdown_requested'] = True
+
+    return output_data
 
 
 def main():
