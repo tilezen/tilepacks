@@ -15,7 +15,12 @@ class ZipfileOutput(object):
         self._metadata[name] = value
 
     def open(self):
-        self._zipfile = zipfile.ZipFile(self._filename, 'w', compression=zipfile.ZIP_DEFLATED)
+        self._zipfile = zipfile.ZipFile(
+            self._filename,
+            'w',
+            compression=zipfile.ZIP_DEFLATED,
+            allowZip64=True
+        )
 
     def add_tile(self, tile_info, data):
         key = '{layer}/{zoom}/{x}/{y}.{fmt}'.format(**tile_info)
