@@ -20,7 +20,7 @@ def main():
         help='A GeoJSON URL with features to cover with tiles')
     parser.add_argument('--tile-size',
         default="256",
-        options=["256", "512", "1024"],
+        choices=["256", "512", "1024"],
         help='The tile size')
     parser.add_argument('--output-prefix',
         default="output",
