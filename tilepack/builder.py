@@ -239,7 +239,7 @@ def main():
     args = parser.parse_args()
 
     api_key = os.environ.get('MAPZEN_API_KEY')
-    url_prefix = os.environ.get('MAPZEN_URL_PREFIX') or "https://tile.mapzen.com/mapzen/"
+    url_prefix = os.environ.get('MAPZEN_URL_PREFIX') or "https://tile.mapzen.com/mapzen"
 
     output_formats = args.output_formats.split(',')
     build_tile_packages(
